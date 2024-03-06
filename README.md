@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # face_recognition_project
 
 A new Flutter project.
@@ -18,4 +18,4 @@ samples, guidance on mobile development, and a full API reference.
 =======
 # face-recognition-with-flutter
  This project is a face recognition mobile application developed using the Flutter framework, Google Ml Kit API, tflite and FaceNet model.
->>>>>>> f3cebe057f5cf755c9407ab268e5b5ddc5213f25
+
