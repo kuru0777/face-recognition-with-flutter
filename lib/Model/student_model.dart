@@ -1,11 +1,9 @@
-import 'dart:ffi';
-
 class StdModel {
   final String id;
   final String stdNumber;
   final String firstName;
   final String lastName;
-  List<Double> embFace = [];
+  List<double> embFace = [];
 
   StdModel({
     required this.id,
@@ -21,7 +19,7 @@ class StdModel {
       stdNumber: data['stdNumber'] ?? '',
       firstName: data['firstName'] ?? '',
       lastName: data['lastName'] ?? '',
-      embFace: data['embFace'] ?? [],
+      embFace: List<double>.from(data['embFace'] ?? []),
     );
   }
 

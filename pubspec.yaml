@@ -31,37 +31,22 @@ dependencies:
   flutter:
     sdk: flutter
 
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  image_picker: ^1.0.4
-  image: ^4.1.3
-  google_ml_kit: ^0.16.3
-  google_mlkit_face_detection: ^0.9.0
-  tflite_flutter: ^0.10.4
+  image_picker: ^1.2.1
+  image: ^4.6.0
+  google_mlkit_face_detection: ^0.13.1
+  google_mlkit_commons: ^0.11.0
+  tflite_flutter: ^0.12.1
   sqflite: ^2.3.0
   path_provider: ^2.1.1
-  lottie: ^2.7.0
-  google_mlkit_commons: ^0.6.1
-  camera: ^0.10.5+8
-  rive: ^0.12.4
-  firebase_core: ^2.24.2
-  google_sign_in: ^6.2.1
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.14.0
-  fluttertoast: ^8.2.4
+  lottie: ^3.3.2
+  camera: ^0.11.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -83,8 +68,7 @@ flutter:
     - assets/images/face_r.json
     - assets/images/homescreen.json
     - assets/images/faceregbasarili.json
-    - assets/model/mobilefacenet.tflite
-    - assets/model/facenet.tflite
+    - assets/model/
 
 
 

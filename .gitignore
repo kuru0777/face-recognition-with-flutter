@@ -41,3 +41,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase configuration (never commit these)
+google-services.json
+GoogleService-Info.plist
+firebase_app_id_file.json
+
+# Environment / secrets
+.env
+.env.*
+
+# Large binary files
+*.apk
+*.rar
+*.zip
+*.aab
+
+# Claude Code local config
+.claude/
+
+# Android local config
+android/local.properties

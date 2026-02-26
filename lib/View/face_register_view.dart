@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:face_recognition_project/Model/db.dart';
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,59 +12,64 @@ import '../ViewModel/face_register.dart';
 import 'constants/painter.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({Key? key}) : super(key: key);
+  const RegistrationScreen({super.key});
 
   @override
-  State<RegistrationScreen> createState() => _HomePageState();
+  State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _HomePageState extends State<RegistrationScreen> {
-  late ImagePicker imagePicker;
+class _RegistrationScreenState extends State<RegistrationScreen> {
+  final ImagePicker _imagePicker = ImagePicker();
   File? _image;
 
   late FaceDetector faceDetector;
   late Recognizer recognizer;
 
-  get widthh => image.width;
+  ui.Image? image;
+  List<Face> faces = [];
 
   @override
   void initState() {
     super.initState();
-    imagePicker = ImagePicker();
-
     final options =
         FaceDetectorOptions(performanceMode: FaceDetectorMode.accurate);
     faceDetector = FaceDetector(options: options);
     recognizer = Recognizer();
   }
 
-  _imgFromCamera() async {
-    XFile? pickedFile = await imagePicker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-        doFaceDetection();
-      });
-    }
+  @override
+  void dispose() {
+    faceDetector.close();
+    recognizer.close();
+    super.dispose();
   }
 
-  _imgFromGallery() async {
+  Future<void> _imgFromCamera() async {
     XFile? pickedFile =
-        await imagePicker.pickImage(source: ImageSource.gallery);
+        await _imagePicker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-        doFaceDetection();
-      });
+      _image = File(pickedFile.path);
+      setState(() {});
+      await _doFaceDetection();
     }
   }
 
-  List<Face> faces = [];
+  Future<void> _imgFromGallery() async {
+    XFile? pickedFile =
+        await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      _image = File(pickedFile.path);
+      setState(() {});
+      await _doFaceDetection();
+    }
+  }
 
-  doFaceDetection() async {
+  Future<void> _doFaceDetection() async {
+    await recognizer.ensureInitialized();
     InputImage inputImage = InputImage.fromFile(_image!);
-    image = await _image?.readAsBytes();
-    image = await decodeImageFromList(_image!.readAsBytesSync());
+
+    final bytes = _image!.readAsBytesSync();
+    image = await decodeImageFromList(bytes);
 
     faces = await faceDetector.processImage(inputImage);
 
@@ -72,49 +77,46 @@ class _HomePageState extends State<RegistrationScreen> {
       final Rect boundingBox = face.boundingBox;
 
       if (kDebugMode) {
-        print("RECTTTTT =$boundingBox");
+        debugPrint("Bounding box: $boundingBox");
       }
 
       num left = boundingBox.left < 0 ? 0 : boundingBox.left;
       num top = boundingBox.top < 0 ? 0 : boundingBox.top;
       num right =
-          boundingBox.right > image.width ? image.width - 1 : boundingBox.right;
-      num bottom = boundingBox.bottom > image.height
-          ? image.height - 1
+          boundingBox.right > image!.width ? image!.width - 1 : boundingBox.right;
+      num bottom = boundingBox.bottom > image!.height
+          ? image!.height - 1
           : boundingBox.bottom;
       num width = right - left;
       num height = bottom - top;
 
-      final bytes = _image?.readAsBytesSync();
-      img.Image? faceImg = img.decodeImage(bytes!);
+      img.Image? faceImg = img.decodeImage(bytes);
       img.Image croppedFace = img.copyCrop(faceImg!,
           x: left.toInt(),
           y: top.toInt(),
           width: width.toInt(),
           height: height.toInt());
-      Recognition recognition = recognizer.recognize(croppedFace, boundingBox);
-      await showFaceRegistrationDialogue(
+      Recognition recognition = await recognizer.recognize(
+        croppedFace,
+        boundingBox,
+      );
+      await _showFaceRegistrationDialog(
           Uint8List.fromList(img.encodeBmp(croppedFace)), recognition);
     }
-    drawRectangleAroundFaces();
+
+    setState(() {});
   }
 
-  removeRotation(File inputImage) async {
-    final img.Image? capturedImage =
-        img.decodeImage(await File(inputImage.path).readAsBytes());
-    final img.Image orientedImage = img.bakeOrientation(capturedImage!);
-    return await File(_image!.path).writeAsBytes(img.encodeJpg(orientedImage));
-  }
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _surnameController = TextEditingController();
+  final TextEditingController _numberController = TextEditingController();
 
-  TextEditingController nameTextEditingController = TextEditingController();
-  TextEditingController surnameTextEditingController = TextEditingController();
-  TextEditingController numberTextEditingController = TextEditingController();
-
-  showFaceRegistrationDialogue(Uint8List cropedFace, Recognition recognition) {
-    showDialog(
+  Future<void> _showFaceRegistrationDialog(
+      Uint8List croppedFace, Recognition recognition) {
+    return showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Yüz Algılandı", textAlign: TextAlign.center),
+        title: const Text("Face Detected", textAlign: TextAlign.center),
         alignment: Alignment.center,
         content: SizedBox(
           height: 600,
@@ -122,59 +124,53 @@ class _HomePageState extends State<RegistrationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(
-                height: 20,
-              ),
-              Image.memory(
-                cropedFace,
-                width: 200,
-                height: 200,
-              ),
+              const SizedBox(height: 20),
+              Image.memory(croppedFace, width: 200, height: 200),
               SizedBox(
                 width: 200,
                 child: TextField(
-                    controller: numberTextEditingController,
+                    controller: _numberController,
                     decoration: const InputDecoration(
                         fillColor: Colors.white,
                         filled: true,
-                        hintText: "Numara")),
+                        hintText: "Number")),
               ),
               SizedBox(
                 width: 200,
                 child: TextField(
-                    controller: nameTextEditingController,
-                    decoration: const InputDecoration(
-                        fillColor: Colors.white, filled: true, hintText: "Ad")),
-              ),
-              SizedBox(
-                width: 200,
-                child: TextField(
-                    controller: surnameTextEditingController,
+                    controller: _nameController,
                     decoration: const InputDecoration(
                         fillColor: Colors.white,
                         filled: true,
-                        hintText: "Soyad")),
+                        hintText: "First Name")),
               ),
-              const SizedBox(
-                height: 10,
+              SizedBox(
+                width: 200,
+                child: TextField(
+                    controller: _surnameController,
+                    decoration: const InputDecoration(
+                        fillColor: Colors.white,
+                        filled: true,
+                        hintText: "Last Name")),
               ),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
                   try {
-                    recognizer.registerFaceFirebase(
-                        numberTextEditingController.text,
-                        nameTextEditingController.text,
-                        surnameTextEditingController.text,
+                    recognizer.registerFaceInDB(
+                        _numberController.text,
+                        _nameController.text,
+                        _surnameController.text,
                         recognition.embedding);
                   } catch (e) {
-                    print(e);
+                    debugPrint('Error registering face: $e');
                   }
 
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     backgroundColor: Colors.amber,
                     content: Text(
-                      "Yüz Kaydedildi",
+                      "Face Saved",
                       style: TextStyle(color: Colors.black),
                     ),
                   ));
@@ -182,7 +178,7 @@ class _HomePageState extends State<RegistrationScreen> {
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber,
                     minimumSize: const Size(200, 40)),
-                child: const Text("Yüzü Kaydet",
+                child: const Text("Save Face",
                     style: TextStyle(color: Colors.black)),
               )
             ],
@@ -193,22 +189,12 @@ class _HomePageState extends State<RegistrationScreen> {
     );
   }
 
-  var image;
-
-  drawRectangleAroundFaces() async {
-    print("${image.width}   ${image.height}");
-    setState(() {
-      image;
-      faces;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: const Text("Yüz Kayıt"),
+          title: const Text("Face Registration"),
           backgroundColor: Colors.amber,
         ),
         body: SingleChildScrollView(
@@ -222,8 +208,8 @@ class _HomePageState extends State<RegistrationScreen> {
                           top: 0, left: 30, right: 30, bottom: 0),
                       child: FittedBox(
                         child: SizedBox(
-                          width: widthh.toDouble(),
-                          height: image.width.toDouble(),
+                          width: image!.width.toDouble(),
+                          height: image!.height.toDouble(),
                           child: CustomPaint(
                             painter: FaceDetectPainter(
                                 facesList: faces, imageFile: image),
@@ -250,17 +236,15 @@ class _HomePageState extends State<RegistrationScreen> {
                           const Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Text(
-                              "Yüz Kayıt Ekranına Hoşgeldiniz",
+                              "Welcome to Face Registration",
                               style: TextStyle(fontSize: 20),
                             ),
                           ),
                           const Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Text(
-                              "Kameradan veya Galeriden fotoğraf seçerek yüz kayıt işlemi gerçekleştirin",
-                              style: TextStyle(
-                                fontSize: 20,
-                              ),
+                              "Register a face by picking a photo from camera or gallery",
+                              style: TextStyle(fontSize: 20),
                             ),
                           ),
                         ],
@@ -285,33 +269,16 @@ class _HomePageState extends State<RegistrationScreen> {
           },
           items: const [
             BottomNavigationBarItem(
-              backgroundColor: Colors.red,
               icon: Icon(Icons.image, size: 40),
-              label: 'Galeriden Seç',
-              tooltip:
-                  'Galeriden fotoğraf seçerek yüz kayıt işlemi gerçekleştirin',
+              label: 'Pick from Gallery',
+              tooltip: 'Pick a photo from gallery to register a face',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.camera_alt, size: 40),
-              label: 'Fotoğraf Çek',
-              tooltip:
-                  'Kameranızdan fotoğraf çekerek yüz kayıt işlemi gerçekleştirin',
+              label: 'Take Photo',
+              tooltip: 'Take a photo to register a face',
             ),
           ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            try {
-              DatabaseHelper dbHelper = DatabaseHelper();
-              await dbHelper.init();
-              List<Map<String, dynamic>> faces = await dbHelper.getAllFaces();
-              print(faces);
-            } catch (e) {
-              print(e);
-            }
-          },
-          child: const Icon(Icons.face),
-          backgroundColor: Colors.amber,
         ));
   }
 }

@@ -1,26 +1,24 @@
-import 'package:face_recognition_project/ViewModel/face_match.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../Model/db.dart';
+import '../ViewModel/face_match.dart';
 import 'face_match_view.dart';
 import 'face_register_view.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
   @override
-  State<HomeScreen> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomeScreen> {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+class _HomeScreenState extends State<HomeScreen> {
   final Recognizer _recognizer = Recognizer();
-  showdialog_all_emb_faces() {
+
+  void _showRegisteredFaces() {
     showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("Yüzler"),
+            title: const Text("Faces"),
             content: SizedBox(
               height: 800,
               width: 400,
@@ -28,7 +26,8 @@ class _HomePageState extends State<HomeScreen> {
                   itemCount: _recognizer.registered.length,
                   itemBuilder: (BuildContext context, int index) {
                     return ListTile(
-                      title: Text(_recognizer.registered.keys.elementAt(index)),
+                      title:
+                          Text(_recognizer.registered.keys.elementAt(index)),
                       subtitle: Text(_recognizer.registered.values
                           .elementAt(index)
                           .embedding
@@ -38,45 +37,26 @@ class _HomePageState extends State<HomeScreen> {
             ),
             actions: [
               TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Kapat"))
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Close"))
             ],
           );
         });
-  }
-
-  fetchFromFirebase() async {
-    FirebaseFirestore.instance
-        .collection('students')
-        .get()
-        .then((QuerySnapshot querySnapshot) => {
-              querySnapshot.docs.forEach((doc) {
-                print(doc["name"]);
-                print(doc["surname"]);
-                print(doc["number"]);
-                print(doc["embedding"]);
-              })
-            });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Yüz Tanıma Uygulaması"),
+        title: const Text("Face Recognition App"),
         backgroundColor: Colors.amber,
         centerTitle: true,
         actions: [
           IconButton(
-              onPressed: () {
-                _databaseHelper.syncDB();
-              },
-              icon: const Icon(Icons.refresh_rounded)),
-          IconButton(
-              onPressed: () {
-                showdialog_all_emb_faces();
+              onPressed: () async {
+                await _recognizer.ensureInitialized();
+                await _recognizer.loadRegisteredFaces();
+                _showRegisteredFaces();
               },
               icon: const Icon(Icons.list))
         ],
@@ -88,8 +68,7 @@ class _HomePageState extends State<HomeScreen> {
               height: 400,
               width: 400,
               child: FittedBox(
-                child: Container(
-                    child: Lottie.asset('assets/images/homescreen.json')),
+                child: Lottie.asset('assets/images/homescreen.json'),
               )),
           Container(
             margin: const EdgeInsets.only(bottom: 50),
@@ -106,11 +85,10 @@ class _HomePageState extends State<HomeScreen> {
                               builder: (context) =>
                                   const RegistrationScreen()));
                     },
-                    child: const Text("Yüz Kayıt",
-                        style: TextStyle(fontSize: 20, color: Colors.black))),
-                Container(
-                  height: 40,
-                ),
+                    child: const Text("Register Face",
+                        style:
+                            TextStyle(fontSize: 20, color: Colors.black))),
+                const SizedBox(height: 40),
                 TextButton(
                     style: TextButton.styleFrom(
                         backgroundColor: Colors.amber,
@@ -119,10 +97,12 @@ class _HomePageState extends State<HomeScreen> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const RecognitionScreen()));
+                              builder: (context) =>
+                                  const RecognitionScreen()));
                     },
-                    child: const Text("Yüz Tanıma",
-                        style: TextStyle(fontSize: 20, color: Colors.black))),
+                    child: const Text("Recognize Face",
+                        style:
+                            TextStyle(fontSize: 20, color: Colors.black))),
               ],
             ),
           ),

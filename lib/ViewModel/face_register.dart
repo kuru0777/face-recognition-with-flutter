@@ -11,7 +11,6 @@ class Recognition {
     if (embedding is List) {
       this.embedding = List.castFrom<dynamic, double>(embedding);
     } else {
-      // Eğer embedding JSON formatında Firestore'dan gelmişse
       this.embedding = List<double>.from(json.decode(embedding));
     }
   }

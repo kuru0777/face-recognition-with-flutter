@@ -6,8 +6,9 @@ import '../../ViewModel/face_register.dart';
 
 class FaceRecognitionPainter extends CustomPainter {
   final List<Recognition> facesList;
-  dynamic imageFile;
-  FaceRecognitionPainter({required this.facesList, @required this.imageFile});
+  final dynamic imageFile;
+  FaceRecognitionPainter({required this.facesList, required this.imageFile});
+
   @override
   void paint(Canvas canvas, Size size) {
     if (imageFile != null) {
@@ -35,7 +36,7 @@ class FaceRecognitionPainter extends CustomPainter {
           textDirection: TextDirection.ltr);
       tp.layout();
       tp.paint(canvas,
-          Offset(face.location.left - 250, face.location.top - tp.height - 10));
+          Offset(face.location.left, face.location.top - tp.height - 10));
     }
   }
 
@@ -46,9 +47,9 @@ class FaceRecognitionPainter extends CustomPainter {
 }
 
 class FaceDetectPainter extends CustomPainter {
-  late List<Face> facesList;
-  dynamic imageFile;
-  FaceDetectPainter({required this.facesList, @required this.imageFile});
+  final List<Face> facesList;
+  final dynamic imageFile;
+  FaceDetectPainter({required this.facesList, required this.imageFile});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -73,11 +74,12 @@ class FaceDetectPainter extends CustomPainter {
 }
 
 class FaceRecognitionLivePainter extends CustomPainter {
-  FaceRecognitionLivePainter(this.absoluteImageSize, this.facesList, this.camDire2);
+  FaceRecognitionLivePainter(
+      this.absoluteImageSize, this.facesList, this.camDire2);
 
   final Size absoluteImageSize;
   final List<Recognition> facesList;
-  CameraLensDirection camDire2;
+  final CameraLensDirection camDire2;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -104,7 +106,8 @@ class FaceRecognitionLivePainter extends CustomPainter {
         paint,
       );
 
-      Paint textBackground = Paint()..color = Colors.black.withOpacity(0.5);
+      Paint textBackground = Paint()
+        ..color = Colors.black.withValues(alpha: 0.5);
 
       final double textLeft = camDire2 == CameraLensDirection.front
           ? (absoluteImageSize.width - face.location.right) * scaleX
@@ -142,4 +145,3 @@ class FaceRecognitionLivePainter extends CustomPainter {
     return true;
   }
 }
-
